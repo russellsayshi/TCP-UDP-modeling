@@ -7,7 +7,7 @@ public class DisplayPanel extends JPanel {
 	JScrollBar rightScroller;
 	JScrollBar bottomScroller;
 
-	public DisplayPanel() {
+	public DisplayPanel(int canvWid, int canvHei) {
 		//Initialize layout manager
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
@@ -19,8 +19,8 @@ public class DisplayPanel extends JPanel {
 		c.weighty = 1.0; //large y weight
 		c.gridx = 0; //left
 		c.gridy = 0; //top
-		JButton button = new JButton("Center");
-		add(button, c);
+		CentralCanvas center = new CentralCanvas(canvWid, canvHei);
+		add(center, c);
 
 		//Add right scrollbar
 		c.weightx = 0.0; //small x weight
