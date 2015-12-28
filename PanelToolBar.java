@@ -6,9 +6,11 @@ import java.net.URL;
 
 public class PanelToolBar extends JToolBar implements ActionListener {
 	private int currentImageSize = 32;
+    private MainWindow mw;
 
-	public PanelToolBar() {
+	public PanelToolBar(MainWindow mw) {
 		super("Toolbar");
+        this.mw = mw;
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		addComponents();
 	}
@@ -52,6 +54,7 @@ public class PanelToolBar extends JToolBar implements ActionListener {
 		if("size".equals(s)) {
 			setMaxDesiredBound(currentImageSize == 32 ? 64 : 32);
 		}
+        mw.notifyDisplayPanelToUpdate();
 	}
 	private void setMaxDesiredBound(int i) {
 		if(currentImageSize != i) {

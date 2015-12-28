@@ -5,6 +5,7 @@ import javax.swing.*;
 /* Holds the main GUI */
 public class MainWindow extends JFrame {
 	private PanelToolBar toolbar;
+    private DisplayPanel dp;
 	protected final int canvasWidth;
 	protected final int canvasHeight;
 
@@ -42,15 +43,24 @@ public class MainWindow extends JFrame {
 		setLayout(new BorderLayout());
 
 		//Toolbar
-		toolbar = new PanelToolBar();
+		toolbar = new PanelToolBar(this);
 		add(toolbar, BorderLayout.PAGE_START);
 
 		//Central frame with canvas
-		DisplayPanel button2 = new DisplayPanel(canvasWidth, canvasHeight);
-		add(button2, BorderLayout.CENTER);
+		dp = new DisplayPanel(canvasWidth, canvasHeight);
+		add(dp, BorderLayout.CENTER);
 	}
 
 	public static void main(String[] args) {
 		new MainWindow(800, 600);
 	}
+    
+    public void notifyDisplayPanelToUpdate() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                dp.updateAll();
+            }
+        });
+    }
 }
