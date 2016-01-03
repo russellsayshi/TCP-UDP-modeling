@@ -17,6 +17,7 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
     private int offsetY;
     private DisplayPanel dp;
 	private BufferedImage img;
+    private ArrayList<DrawableObject> objects = new ArrayList<>();
 
 	public CentralCanvas(int width, int height, DisplayPanel dp) {
         this.dp = dp;
@@ -43,6 +44,7 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
         redrawImage();
     }
     
+    boolean done = false;
     public void redrawImage() {
         int paneWid = getWidth();
         int paneHei = getHeight();
@@ -51,6 +53,14 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, paneWid, paneHei);
         g.setColor(Color.BLACK);
+        
+        //KILL ME
+        if(!done) {
+            objects.add(new DrawableText("Hey", 0, 0, g));
+            objects.add(new DrawableText("N33to", 100, 100, g));
+        }
+        //END KILL ME
+        
         int newImageWid = (int)(width * zoom);
         int newImageHei = (int)(height * zoom);
         offsetX = 0;
@@ -65,6 +75,17 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
                    (int)((-dp.getVerticalScrollBar().getValue()) * zoom + offsetY),
                    (int)(newImageWid)-1,
                    (int)(newImageHei)-1);
+        Rectangle viewport = new Rectangle(dp.getHorizontalScrollBar().getValue(),
+                                           dp.getVerticalScrollBar().getValue(),
+                                            dp.getHorizontalScrollBar().getVisibleAmount(),
+                                           dp.getVerticalScrollBar().getVisibleAmount());
+        for(DrawableObject object : objects) {
+            System.out.println(object.intersectsWith(viewport));
+            if(object.intersectsWith(viewport)) {
+                object.draw(g, zoom, offsetX, offsetY);
+                object.drawBoundingBox(g, zoom, offsetX, offsetY);
+            }
+        }
         g.dispose();
     }
     

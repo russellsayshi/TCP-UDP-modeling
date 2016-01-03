@@ -1,17 +1,10 @@
 import java.awt.*;
 
-public class DrawableObject {
-    private Rectangle rect;
-    private ObjectType t;
+public abstract class DrawableObject {
+    protected Rectangle rect; //bounding box
     
-    public enum ObjectType {
-        TEXT,
-        NODE
-    }
-    
-    public DrawableObject(int x, int y, int width, int height, ObjectType t) {
-        this.t = TEXT;
-        rect = new Rectangle(x, y, width, height);
+    public DrawableObject() {
+        rect = new Rectangle(0, 0, 10, 10);
     }
     
     public Rectangle getRectangle() {
@@ -20,5 +13,12 @@ public class DrawableObject {
     
     public boolean intersectsWith(Rectangle otherRect) {
         return rect.intersects(otherRect);
+    }
+    
+    public abstract void draw(Graphics g, double zoom, int offsetX, int offsetY);
+    public abstract void recalculateBoundingBox(Graphics g);
+    
+    public void drawBoundingBox(Graphics g, double zoom, int offsetX, int offsetY) {
+        g.drawRect(rect.x, rect.y, rect.width, rect.height);
     }
 }
