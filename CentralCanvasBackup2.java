@@ -144,8 +144,8 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
 		int x = e.getX();
 		int y = e.getY();
         
-        int xDisplay = (int)((x - offsetX)/zoom + dp.getHorizontalScrollBar().getValue());
-        int yDisplay = (int)((y - offsetY)/zoom + dp.getVerticalScrollBar().getValue());
+        int xDisplay = (int)((x - offsetX)/zoom);
+        int yDisplay = (int)((y - offsetY)/zoom);
         
         repaint();
 	}
@@ -208,8 +208,8 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
     }
     
     public void correctZoomPosition(int scrollAmount, int x, int y) {
-        dp.getHorizontalScrollBar().setValue(dp.getHorizontalScrollBar().getValue() + (int)(((x - getWidth()/2) * (-scrollAmount)/2/zoom)));
-        dp.getVerticalScrollBar().setValue(dp.getVerticalScrollBar().getValue() + (int)(((y - getHeight()/2) * (-scrollAmount)/2/zoom)));
+        dp.getHorizontalScrollBar().setValue(dp.getHorizontalScrollBar().getValue() + (int)(((x - getWidth()/2)/zoom * (-scrollAmount) / (zoom))));
+        dp.getVerticalScrollBar().setValue(dp.getVerticalScrollBar().getValue() + (int)(((y - getHeight()/2)/zoom * (-scrollAmount) / (zoom))));
     }
 
 	@Override

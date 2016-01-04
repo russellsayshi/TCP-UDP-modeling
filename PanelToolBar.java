@@ -4,14 +4,16 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.net.URL;
 
-public class PanelToolBar extends JToolBar implements ActionListener {
+public class PanelToolBar extends JToolBar implements ActionListener, MouseListener {
 	private int currentImageSize = 32;
     private MainWindow mw;
+    private Point lastKnownMouseLoc = new Point(0, 0);
 
 	public PanelToolBar(MainWindow mw) {
 		super("Toolbar");
         this.mw = mw;
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        addMouseListener(this);
 		addComponents();
 	}
 	private void addComponents() {
@@ -53,7 +55,9 @@ public class PanelToolBar extends JToolBar implements ActionListener {
 		String s = ae.getActionCommand();
 		if("size".equals(s)) {
 			setMaxDesiredBound(currentImageSize == 32 ? 64 : 32);
-		}
+        } else if("computer".equals(this)) {
+            new ComputerTooltipFrame(lastKnownMouseLoc.x, lastKnownMouseLoc.y, null);
+        }
         mw.notifyDisplayPanelToUpdate();
 	}
 	private void setMaxDesiredBound(int i) {
@@ -65,4 +69,19 @@ public class PanelToolBar extends JToolBar implements ActionListener {
 			repaint();
 		}
 	}
+    
+    @Override
+    public void mouseClicked(MouseEvent me) {
+        Point locationOnScreen = getLocationOnScreen();
+        locationOnScreen.translate(me.getX(), me.getY());
+        lastKnownMouseLoc = locationOnScreen;
+    }
+    @Override
+    public void mouseExited(MouseEvent me) {}
+    @Override
+    public void mouseEntered(MouseEvent me) {}
+    @Override
+    public void mouseReleased(MouseEvent me) {}
+    @Override
+    public void mousePressed(MouseEvent me) {}
 }

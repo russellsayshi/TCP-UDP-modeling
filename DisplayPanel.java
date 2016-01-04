@@ -54,7 +54,7 @@ public class DisplayPanel extends JPanel {
                     ignoreNextVerticalScroll = false;
                     return;
                 }
-                center.redrawImage();
+                center.redrawImage(false);
                 center.repaint();
             }
         });
@@ -66,7 +66,7 @@ public class DisplayPanel extends JPanel {
                     ignoreNextHorizontalScroll = false;
                     return;
                 }
-                center.redrawImage();
+                center.redrawImage(false);
                 center.repaint();
             }
         });
@@ -126,7 +126,7 @@ public class DisplayPanel extends JPanel {
     }
     
     public void updateAll() {
-        center.regenerateImage();
+        center.regenerateImage(true);
         center.repaint();
     }
     

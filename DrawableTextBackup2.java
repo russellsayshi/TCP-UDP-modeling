@@ -20,6 +20,6 @@ public class DrawableText extends DrawableObject {
     
     @Override
     public void draw(Graphics g, Rectangle viewport, double zoom, int offsetX, int offsetY) {
-        g.drawString(text, (int)((rect.x - viewport.x) * zoom) + offsetX, (int)((rect.y + rect.height - viewport.y) * zoom) + offsetY);
+        g.drawString(text, (int)(rect.x * zoom) + offsetX - viewport.x, (int)((rect.y + rect.height) * zoom) + offsetY - viewport.y);
     }
 }
