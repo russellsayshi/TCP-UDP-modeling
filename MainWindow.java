@@ -50,6 +50,10 @@ public class MainWindow extends JFrame {
 		dp = new DisplayPanel(canvasWidth, canvasHeight);
 		add(dp, BorderLayout.CENTER);
 	}
+    
+    protected DisplayPanel getDisplayPanel() {
+        return dp;
+    }
 
 	public static void main(String[] args) {
 		new MainWindow(800, 600);

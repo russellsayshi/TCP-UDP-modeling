@@ -129,8 +129,11 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
 	@Override
 	public void paintComponent(Graphics g) {
         if(img == null) {
-            handleImageNull();
-            return;
+            regenerateImage(true);
+            if(img == null) {
+                handleImageNull();
+                return;
+            }
         }
 		g.drawImage(img, 0, 0, null);
 	}

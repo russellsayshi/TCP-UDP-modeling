@@ -8,7 +8,6 @@ public class PanelToolBar extends JToolBar implements ActionListener {
 	private int currentImageSize = 32;
     private MainWindow mw;
     private JButton computerButton;
-    private ComputerTooltipFrame ctf;
 
 	public PanelToolBar(MainWindow mw) {
 		super("Toolbar");
@@ -42,7 +41,7 @@ public class PanelToolBar extends JToolBar implements ActionListener {
 		JButton button = new JButton();
 		button.setActionCommand(actionCommand);
 		button.setToolTipText(toolTipText);
-		button.addActionListener(this);
+		//button.addActionListener(this);
 
 		if(imageURL != null) { //image found
 			button.setIcon(new ImageIcon(imageURL, altText));
@@ -56,16 +55,12 @@ public class PanelToolBar extends JToolBar implements ActionListener {
 		String s = ae.getActionCommand();
 		if("size".equals(s)) {
 			setMaxDesiredBound(currentImageSize == 32 ? 64 : 32);
-            mw.notifyDisplayPanelToUpdate();
         } else if("computer".equals(s)) {
-            Point p = computerButton.getLocationOnScreen();
+            Point p = computerButton.getLocation();
             Dimension d = computerButton.getSize();
-            p.translate(d.width/2, d.height);
-            if(ctf != null) {
-                ctf.dispose();
-            }
-            ctf = new ComputerTooltipFrame(p.x, p.y, r -> System.out.println(r));
-        }
+            p.translate(d.width/2, d.height/2);
+            new ComputerTooltipFrame(p.x, p.y, r -> System.out.println(r));
+        mw.notifyDisplayPanelToUpdate();
 	}
 	private void setMaxDesiredBound(int i) {
 		if(currentImageSize != i) {
