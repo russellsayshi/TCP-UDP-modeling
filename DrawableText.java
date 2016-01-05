@@ -8,14 +8,15 @@ class DrawableText extends DrawableObject {
         this.text = text;
         rect.x = x;
         rect.y = y;
-        updateBoundingBox(g);
+        updateBoundingBox(g, 1.0);
+        originalRect = rect;
     }
     
     @Override
-    public void updateBoundingBox(Graphics g) {
+    public void updateBoundingBox(Graphics g, double zoom) {
         this.f = g.getFont();
         FontMetrics metrics = g.getFontMetrics(f);
-        rect = new Rectangle(rect.x, rect.y, metrics.stringWidth(text), metrics.getHeight());
+        rect.setSize(metrics.stringWidth(text), metrics.getHeight());
     }
     
     @Override

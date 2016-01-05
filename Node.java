@@ -14,6 +14,7 @@ class Node {
     private boolean working = false;
     private String ip;
     private Network net;
+    private Computer computer;
     
     public interface ReceiveFunction {
         void accept(String str0, Integer int0, String str1);
@@ -157,7 +158,8 @@ class Node {
                     return false;
                 }
                 hasConnection = true;
-                System.out.println("Connecting to: " + remoteIP + ":" + port);
+                //System.out.println("Connecting to: " + remoteIP + ":" + port);
+                
                 if(onConnection != null) {
                     Node.this.getNet().getExecutor().submit(() -> {
                         onConnection.accept(remoteIP);
@@ -199,10 +201,10 @@ class Node {
         private ReceiveFunction rf;
         
         public void send(String ip, int port, String data) {
-            System.out.println("Sending to: " + ip + ":" + port + " data: " + data);
+            net.sendUDPData(ip, port, data, Node.this.getIP());
         }
         public void receive(String ip, int port, String data) {
-            System.out.println("Receiving from: " + ip + ":" + port + " data: " + data);
+            //System.out.println("Receiving from: " + ip + ":" + port + " data: " + data);
             if(rf != null) {
                 Node.this.getNet().getExecutor().submit(() -> {
                     rf.accept(ip, port, data);
@@ -222,21 +224,18 @@ class Node {
             return Node.this.getNet().ping(ip);
         }
         
-        public java.util.Timer waitMillis(TimerTask runnable, int milliseconds) {
+        public java.util.Timer wait(TimerTask runnable, int milliseconds) {
             java.util.Timer timer = new java.util.Timer();
             timer.schedule(runnable, milliseconds);
             return timer;
         }
-        
-        public java.util.Timer wait(TimerTask runnable, int seconds) {
-            return waitMillis(runnable, seconds * 1000);
-        }
     }
     
-    public Node(Consumer<ScriptException> errorCallback, String ip, Network net) {
+    public Node(Consumer<ScriptException> errorCallback, String ip, Network net, Computer computer) {
         this.errorCallback = errorCallback;
         this.ip = ip;
         this.net = net;
+        this.computer = computer;
     }
     
     public void setIP(String ip) {

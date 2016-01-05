@@ -5,6 +5,7 @@ import javax.swing.*;
 /* Container for bottom part of layout, with canvas, scrollbars, etc. */
 class DisplayPanel extends JPanel {
     private CentralCanvas center;
+    private Network network = new Network();
 	JScrollBar rightScroller;
 	JScrollBar bottomScroller;
     //To prevent excess repaints
@@ -133,6 +134,10 @@ class DisplayPanel extends JPanel {
         center.addDrawableObject(obj);
     }
     
+    public DrawableObject getObjectAtScreenLocation(int x, int y) {
+        return center.getObjectAtScreenLocation(x, y);
+    }
+    
     public void updateAll() {
         center.regenerateImage(true);
         center.repaint();
@@ -176,5 +181,9 @@ class DisplayPanel extends JPanel {
     
     public void ignoreNextVerticalScroll() {
         ignoreNextVerticalScroll = true;
+    }
+    
+    public Network getNetwork() {
+        return network;
     }
 }

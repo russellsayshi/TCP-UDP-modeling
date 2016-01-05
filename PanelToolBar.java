@@ -23,6 +23,7 @@ class PanelToolBar extends JToolBar implements ActionListener {
 		add(makeIconButton("text", "text", "Draw text on the canvas", "Text"));
         computerButton = makeIconButton("computer", "computer", "Create a new computer", "Add computer");
 		add(computerButton);
+        add(makeIconButton("script", "script", "Scripting tool", "Script"));
 
 		add(Box.createHorizontalGlue());
 
@@ -93,18 +94,82 @@ class PanelToolBar extends JToolBar implements ActionListener {
                                 point = pointsActual.get(i);
                                 gp.lineTo(point.x, point.y);
                             }
-                            dp.addDrawableObject(new DrawablePath(gp));
+                            DrawablePath drawpath = new DrawablePath(gp);
+                            Computer comp = Computer.computerFactory(drawpath, dp);
+                            if(comp != null) {
+                                drawpath.setComputer(comp);
+                                dp.addDrawableObject(drawpath);
+                            } else {
+                                dp.updateAll();
+                            }
                         }
                     }));
                     break;
                     case RECTANGLE:
+                    dp.setAction(new CanvasAction("Rectangle", (screen, actual, g) -> {
+                        //Mouse pressed
+                        pointsScreen.add(screen);
+                        pointsActual.add(actual);
+                        counter.val = 0;
+                    }, (screen, actual, g) -> {
+                        Graphics2D g2d = (Graphics2D)g;
+                        Point p1 = pointsScreen.get(0);
+                        if(counter.val == 1) {
+                            Point p2 = pointsScreen.get(1);
+                            g2d.setColor(Color.WHITE);
+                            g2d.draw(Utility.normalizeRectangle(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y));
+                            pointsScreen.remove(1);
+                            pointsActual.remove(1);
+                        }
+                        g2d.setColor(Color.BLACK);
+                        Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, screen.x-p1.x, screen.y-p1.y);
+                        g2d.draw(rect);
+                        pointsScreen.add(screen);
+                        pointsActual.add(actual);
+                        counter.val = 1;
+                    }, (screen, actual, g) -> {
+                        if(pointsActual.size() > 0) {
+                            Point p1 = pointsActual.get(0);
+                            Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, actual.x-p1.x, actual.y-p1.y);
+                            if(rect.width < 5 || rect.height < 5) {
+                                Utility.displayError("Error", "Please draw a bigger rectangle");
+                                dp.updateAll();
+                                return;
+                            }
+                            DrawableRectangle drawrect = new DrawableRectangle(rect);
+                            Computer comp = Computer.computerFactory(drawrect, dp);
+                            if(comp != null) {
+                                drawrect.setComputer(comp);
+                                dp.addDrawableObject(drawrect);
+                            } else {
+                                dp.updateAll();
+                            }
+                        }
+                    }));
                     break;
                     case OVAL:
+                    Utility.displayError("Error", "Not supported yet.");
                     break;
                     case IMAGE:
+                    Utility.displayError("Error", "Not supported yet.");
                     break;
                 }
             });
+        } else if("script".equals(s)) {
+            mw.getDisplayPanel().setAction(new CanvasAction("Script", null, null, (screen, actual, g) -> {
+                DrawableObject drawable = mw.getDisplayPanel().getObjectAtScreenLocation(screen.x, screen.y);
+                if(drawable == null) {
+                    Utility.displayError("Error", "The background is not scriptable.");
+                } else {
+                    Computer comp = drawable.getComputer();
+                    if(comp != null) {
+                        String str = Utility.getInput("Input", "Please script the chosen computer:");
+                        if(str != null) {
+                            comp.getNode().setScript(str);
+                        }
+                    }
+                }
+            }));
         }
 	}
 	private void setMaxDesiredBound(int i) {

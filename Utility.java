@@ -37,4 +37,30 @@ class Utility {
             System.out.println(verifyIP(args[1]));
         }
     }
+    
+    public static Rectangle normalizeRectangle(int x, int y, int width, int height) {
+        if(width < 0) {
+            x += width;
+            width = -width;
+        }
+        if(height < 0) {
+            y += height;
+            height = -height;
+        }
+        return new Rectangle(x, y, width, height);
+    }
+    
+    public static void displayError(String title, String message) {
+        JOptionPane.showMessageDialog(null,
+                                      message,
+                                      title,
+                                      JOptionPane.ERROR_MESSAGE);
+    }
+    
+    public static String getInput(String title, String message) {
+        return JOptionPane.showInputDialog(null,
+                                      message,
+                                      title,
+                                      JOptionPane.PLAIN_MESSAGE);
+    }
 }

@@ -6,20 +6,27 @@ class DrawablePath extends DrawableObject {
     private int xloc;
     private int yloc;
     private AffineTransform storedTransform;
+    private Computer computer;
     
     public DrawablePath(GeneralPath gp) {
+        this.computer = computer;
         AffineTransform t = new AffineTransform();
         rect = gp.getBounds();
+        originalRect = rect;
         xloc = rect.x;
         yloc = rect.y;
         t.translate(-xloc, -yloc);
         Shape s = gp.createTransformedShape(t);
-        gp = new GeneralPath(s);
+        this.gp = new GeneralPath(s);
+    }
+    
+    public void setComputer(Computer computer) {
+        this.computer = computer;
     }
     
     @Override
-    public void updateBoundingBox(Graphics g) {
-        rect = gp.getBounds();
+    public void updateBoundingBox(Graphics g, double zoom) {
+        rect.setSize((int)(originalRect.width * zoom), (int)(originalRect.height * zoom));
     }
     
     @Override
@@ -33,6 +40,13 @@ class DrawablePath extends DrawableObject {
         //g.drawString(text, (int)((rect.x - viewport.x) * zoom) + offsetX, (int)((rect.y + rect.height - viewport.y) * zoom) + offsetY);
     }
     
+    @Override
+    public void drawBoundingBox(Graphics g, Rectangle viewport, double zoom, int offsetX, int offsetY) {
+        Graphics2D g2d = (Graphics2D)g;
+        Rectangle r = new Rectangle(0, 0, rect.width, rect.height);
+        g2d.draw(r);
+    }
+    
     public void transformGraphics(Graphics g) {
         Graphics2D g2d = (Graphics2D)g;
         storedTransform = g2d.getTransform();
@@ -41,5 +55,15 @@ class DrawablePath extends DrawableObject {
     public void resetGraphics(Graphics g) {
         Graphics2D g2d = (Graphics2D)g;
         g2d.setTransform(storedTransform);
+    }
+    
+    @Override
+    public boolean isComputer() {
+        return computer != null;
+    }
+    
+    @Override
+    public Computer getComputer() {
+        return computer;
     }
 }

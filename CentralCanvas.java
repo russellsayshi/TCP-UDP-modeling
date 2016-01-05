@@ -44,6 +44,12 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
 	}
 
     public void addDrawableObject(DrawableObject obj) {
+        Rectangle whole = new Rectangle(0, 0, width, height);
+        if(!whole.contains(obj.getRectangle())) {
+            Utility.displayError("Error", "That object does not fit within the bounds of the canvas.");
+            redrawImage(false);
+            return;
+        }
         if(obj.getClass().isInstance(DrawablePath.class)) {
             freehandObjects.add((DrawablePath)obj);
         } else {
@@ -56,7 +62,6 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
         redrawImage(zoomChanged);
     }
     
-    boolean done = false;
     public void redrawImage(boolean zoomChanged) {
         int paneWid = getWidth();
         int paneHei = getHeight();
@@ -69,15 +74,6 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
         if(drawingFont == null) {
             drawingFont = new Font("Serif", Font.PLAIN, 12);
         }
-        
-        //KILL ME
-        if(!done) {
-            objects.add(new DrawableText("Hey", 0, 0, g));
-            objects.add(new DrawableText("N33to", 100, 100, g));
-            objects.add(new DrawableText("N33to", 700, 500, g));
-            done = true;
-        }
-        //END KILL ME
         
         int newImageWid = (int)(width * zoom);
         int newImageHei = (int)(height * zoom);
@@ -107,7 +103,7 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
             for(DrawablePath object : freehandObjects) {
                 if(object.intersectsWith(viewport, zoom)) {
                     object.draw(g, viewport, zoom, offsetX, offsetY);
-                    object.drawBoundingBox(g, viewport, zoom, offsetX, offsetY);
+                    //object.drawBoundingBox(g, viewport, zoom, offsetX, offsetY);
                 }
             }
             freehandObjects.get(0).resetGraphics(g);
@@ -115,7 +111,7 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
         for(DrawableObject object : objects) {
             if(object.intersectsWith(viewport, zoom)) {
                 object.draw(g, viewport, zoom, offsetX, offsetY);
-                object.drawBoundingBox(g, viewport, zoom, offsetX, offsetY);
+                //object.drawBoundingBox(g, viewport, zoom, offsetX, offsetY);
             }
         }
         g.dispose();
@@ -211,7 +207,6 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
                 Graphics g = img.getGraphics();
                 action.down().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
                 g.dispose();
-                action = emptyAction;
                 repaint();
             }
         }
@@ -220,10 +215,11 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
 	@Override
 	public void mouseReleased(MouseEvent e) {
         if(SwingUtilities.isLeftMouseButton(e)) {
-            if(action.down() != null) {
+            if(action.release() != null) {
                 Graphics g = img.getGraphics();
-                action.down().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
+                action.release().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
                 g.dispose();
+                action = emptyAction;
                 repaint();
             }
         }
@@ -238,10 +234,7 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
     }*/
     
     public void handleImageNull() {
-        JOptionPane.showMessageDialog(this,
-                                      "An error occured. A BufferedImage was null when it should not have been.",
-                                      "Image error",
-                                      JOptionPane.ERROR_MESSAGE);
+        Utility.displayError("Image error", "An error occured. A BufferedImage was null when it should not have been.");
     }
     
     public void verticalScrollChanged(final int delta) {
@@ -270,6 +263,21 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
     public void correctZoomPosition(int scrollAmount, int x, int y) {
         dp.getHorizontalScrollBar().setValue(dp.getHorizontalScrollBar().getValue() + (int)(((x - getWidth()/2) * (-scrollAmount)/2/zoom)));
         dp.getVerticalScrollBar().setValue(dp.getVerticalScrollBar().getValue() + (int)(((y - getHeight()/2) * (-scrollAmount)/2/zoom)));
+    }
+    
+    public DrawableObject getObjectAtScreenLocation(int x, int y) {
+        Point truePoint = calculateTrueLocation(x, y);
+        for(int i = objects.size()-1; i >= 0; i--) {
+            if(objects.get(i).getOriginalRectangle().contains(truePoint)) {
+                return objects.get(i);
+            }
+        }
+        for(int i = freehandObjects.size()-1; i >= 0; i--) {
+            if(freehandObjects.get(i).getOriginalRectangle().contains(truePoint)) {
+                return freehandObjects.get(i);
+            }
+        }
+        return null;
     }
 
 	@Override
