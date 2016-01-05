@@ -4,7 +4,7 @@ import java.awt.image.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener {
+class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener {
 	private final int width;
 	private final int height;
     private static final double ZOOM_FACTOR = 0.1; //up to 1 decimal place
@@ -18,7 +18,10 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
     private DisplayPanel dp;
 	private BufferedImage img;
     private ArrayList<DrawableObject> objects = new ArrayList<>();
+    private ArrayList<DrawablePath> freehandObjects = new ArrayList<>();
     private Font drawingFont;
+    private final static CanvasAction emptyAction = new CanvasAction("", null, null, null);
+    private CanvasAction action = emptyAction;
 
 	public CentralCanvas(int width, int height, DisplayPanel dp) {
         this.dp = dp;
@@ -39,6 +42,14 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
             public void componentMoved(ComponentEvent e) {}
         });
 	}
+
+    public void addDrawableObject(DrawableObject obj) {
+        if(obj.getClass().isInstance(DrawablePath.class)) {
+            freehandObjects.add((DrawablePath)obj);
+        } else {
+            objects.add(obj);
+        }
+    }
     
     public void regenerateImage(boolean zoomChanged) {
         updateScrollbars();
@@ -91,6 +102,16 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
                                            dp.getHorizontalScrollBar().getVisibleAmount(),
                                            dp.getVerticalScrollBar().getVisibleAmount());
         //System.out.println(viewport);
+        if(freehandObjects.size() > 0) {
+            freehandObjects.get(0).transformGraphics(g);
+            for(DrawablePath object : freehandObjects) {
+                if(object.intersectsWith(viewport, zoom)) {
+                    object.draw(g, viewport, zoom, offsetX, offsetY);
+                    object.drawBoundingBox(g, viewport, zoom, offsetX, offsetY);
+                }
+            }
+            freehandObjects.get(0).resetGraphics(g);
+        }
         for(DrawableObject object : objects) {
             if(object.intersectsWith(viewport, zoom)) {
                 object.draw(g, viewport, zoom, offsetX, offsetY);
@@ -137,30 +158,44 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
         }
 		g.drawImage(img, 0, 0, null);
 	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-        if(img == null) {
-            handleImageNull();
-            return;
-        }
-		int x = e.getX();
-		int y = e.getY();
-        
+    
+    public void setAction(CanvasAction action) {
+        this.action = action;
+    }
+    
+    private Point calculateTrueLocation(int x, int y) {
         int xDisplay = (int)((x - offsetX)/zoom + dp.getHorizontalScrollBar().getValue());
         int yDisplay = (int)((y - offsetY)/zoom + dp.getVerticalScrollBar().getValue());
-        
-        repaint();
-	}
+        return new Point(xDisplay, yDisplay);
+    }
     
+    private double toMoveXBuffer = 0.0;
+    private double toMoveYBuffer = 0.0;
     @Override
     public void mouseDragged(MouseEvent e) {
         if(SwingUtilities.isRightMouseButton(e)) {
-            int toMoveX = lastMouseX - e.getX();
-            int toMoveY = lastMouseY - e.getY();
-            dp.getHorizontalScrollBar().setValue(dp.getHorizontalScrollBar().getValue() + toMoveX);
-            dp.getVerticalScrollBar().setValue(dp.getVerticalScrollBar().getValue() + toMoveY);
+            double toMoveX = lastMouseX - e.getX();
+            double toMoveY = lastMouseY - e.getY();
+            toMoveXBuffer += toMoveX/zoom;
+            toMoveYBuffer += toMoveY/zoom;
+            if(Math.abs(toMoveXBuffer) >= 1.0) {
+                int buf = (int)toMoveXBuffer;
+                dp.getHorizontalScrollBar().setValue(dp.getHorizontalScrollBar().getValue() + buf);
+                toMoveXBuffer -= buf;
+            }
+            if(Math.abs(toMoveYBuffer) >= 1.0) {
+                int buf = (int)toMoveYBuffer;
+                dp.getVerticalScrollBar().setValue(dp.getVerticalScrollBar().getValue() + buf);
+                toMoveYBuffer -= buf;
+            }
             regenerateImage(false);
+        } else if(SwingUtilities.isLeftMouseButton(e)) {
+            if(action.drag() != null) {
+                Graphics g = img.getGraphics();
+                action.drag().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
+                g.dispose();
+                repaint();
+            }
         }
         lastMouseX = e.getX();
         lastMouseY = e.getY();
@@ -170,6 +205,28 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
 	public void mousePressed(MouseEvent e) {
         lastMouseX = e.getX();
         lastMouseY = e.getY();
+        
+        if(SwingUtilities.isLeftMouseButton(e)) {
+            if(action.down() != null) {
+                Graphics g = img.getGraphics();
+                action.down().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
+                g.dispose();
+                action = emptyAction;
+                repaint();
+            }
+        }
+    }
+    
+	@Override
+	public void mouseReleased(MouseEvent e) {
+        if(SwingUtilities.isLeftMouseButton(e)) {
+            if(action.down() != null) {
+                Graphics g = img.getGraphics();
+                action.down().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
+                g.dispose();
+                repaint();
+            }
+        }
     }
     
     //For debug purposes
@@ -219,8 +276,8 @@ public class CentralCanvas extends JPanel implements MouseListener, MouseMotionL
 	public void mouseExited(MouseEvent e) {}
 	@Override
 	public void mouseEntered(MouseEvent e) {}
-	@Override
-	public void mouseReleased(MouseEvent e) {}
     @Override
     public void mouseMoved(MouseEvent e) {}
+	@Override
+	public void mouseClicked(MouseEvent e) {}
 }
