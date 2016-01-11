@@ -1,0 +1,38 @@
+<h1>Script help</h1>
+<p>Welcome to the computer scripter. This is how you will make each network node do something. Note that each IP should be a string in the format of "x.x.x.x", each port should be an integer, and that each bit of packet data should be a string.</p>
+<p>There are many classes provided to you:</p>
+<h2>Utility</h2>
+	<p>This class is a pre-instantiated global object that provides basic utility functions.</p>
+	<ul>
+		<li><b>getIP()</b> Returns the current computer's IP</li>
+		<li><b>getBroadcastAddr()</b> Returns the netwrok's broadcast address</li>
+		<li><b>pingIP(ip)</b> Returns true/false whether <i>ip</i> exists.</li>
+	</ul>
+<h2>UDP</h2>
+	<p>This class is a pre-instantiated global object that allows the sending and receiving of UDP packets.</p>
+	<ul>
+		<li><b>send(ip, port, data)</b> Sends <i>data</i> to <i>ip</i>:<i>port</i>.</li>
+		<li><b>onReceive(func(ip, port, data))</b> Sets <i>func</i> to be called when the computer receives a UDP packet. <i>func</i> should have three parameters, <i>ip</i>, <i>port</i>, and <i>data</i>.</li>
+	</ul>
+<h2>TCP</h2>
+	<p>This class is a pre-instantiated global object that allows the establishment of TCP clients and servers.</p>
+	<ul>
+		<li><b>createServer(port)</b> Creates a TCP server at <i>port</i> and returns the TCPConnection object that represents the server.</li>
+        <li><b>connectToServer(ip, port)</b> Connects to a TCP server at <i>ip</i>:<i>port</i> and returns the TCPConnection object that represents the client.</li>
+        <li><b>getServerAtPort(port)</b> If you created a server at <i>port</i>, return it. Else return null.</li>
+        <li><b>getClientAtIPAndPort(ip, port)</b> If you connected to a server at <i>ip</i>:<i>port</i>, return the client object. Else return null.</li>
+    </ul>
+<h2>TCPConnection</h2>
+    <p>This is the class that is returned by TCP methods such as <b>createServer()</b> and <b>connectToServer()</b>. It can represent either a client or a server object.</p>
+    <ul>
+        <li><b>isServer()</b> Returns true if server, false if client.</li>
+        <li><b>onConnection(func(remote))</b> Sets the callback function, <i>func</i>, for whenever a new TCP connection is established.</li>
+        <li>Server <b>getClients()</b> Returns a list of connected clients.</li>
+    </ul>
+
+<h2>Sample programs</h2>
+<h3>Print IP</h3>
+<code>print(Utility.getIP())</code>
+<h3>Broadcast UDP packet to network</h3>
+<code>var port = 300; //can be any integer
+UDP.send(Utility.getBroadcastAddr(), port, "Hello!");</code>

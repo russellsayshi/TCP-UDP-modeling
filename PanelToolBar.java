@@ -163,10 +163,11 @@ class PanelToolBar extends JToolBar implements ActionListener {
                 } else {
                     Computer comp = drawable.getComputer();
                     if(comp != null) {
-                        String str = Utility.getInput("Input", "Please script the chosen computer:");
-                        if(str != null) {
-                            comp.getNode().setScript(str);
-                        }
+                        new ScriptDialog(mw, str -> {
+                            if(str != null) {
+                                comp.getNode().setScript(str);
+                            }
+                        }).setVisible(true);
                     }
                 }
             }));

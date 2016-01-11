@@ -23,6 +23,10 @@ class Network {
         return true;
     }
     
+    public String getBroadcastAddr() {
+        return BROADCAST_ADDR;
+    }
+    
     public synchronized ExecutorService getExecutor() {
         return executor;
     }

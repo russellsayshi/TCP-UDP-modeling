@@ -57,6 +57,13 @@ class Utility {
                                       JOptionPane.ERROR_MESSAGE);
     }
     
+    public static void displayMessage(String title, String message) {
+        JOptionPane.showMessageDialog(null,
+                                      message,
+                                      title,
+                                      JOptionPane.PLAIN_MESSAGE);
+    }
+    
     public static String getInput(String title, String message) {
         return JOptionPane.showInputDialog(null,
                                       message,

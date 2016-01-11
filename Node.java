@@ -84,6 +84,13 @@ class Node {
                 clients = new ArrayList<TCPConnectionData>();
             }
             
+            public ArrayList<TCPConnectionData> getClients() {
+                if(isServer) {
+                    return clients;
+                }
+                return null;
+            }
+            
             //Create client
             public TCPConnection(String remoteIP, int port) {
                 this.otherEnd.remoteIP = remoteIP;
@@ -142,7 +149,7 @@ class Node {
                 }
             }
             
-            //Only for clients
+            //For clients
             public void setOtherEnd(TCPConnection otherEnd, String remoteIP, int port) {
                 if(isServer) {
                     return;
@@ -218,6 +225,10 @@ class Node {
     public class NodeUtility {
         public String getIP() {
             return ip;
+        }
+        
+        public String getBroadcastAddr() {
+            return net.getBroadcastAddr();
         }
         
         public boolean pingIP(String ip) {
