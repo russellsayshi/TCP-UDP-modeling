@@ -6,6 +6,8 @@ import javax.swing.*;
 class MainWindow extends JFrame {
 	private PanelToolBar toolbar;
     private DisplayPanel dp;
+    private Console console;
+    private JScrollPane consoleScroll;
 	protected final int canvasWidth;
 	protected final int canvasHeight;
 
@@ -48,7 +50,15 @@ class MainWindow extends JFrame {
 
 		//Central frame with canvas
 		dp = new DisplayPanel(canvasWidth, canvasHeight);
-		add(dp, BorderLayout.CENTER);
+        
+        console = new Console();
+        consoleScroll = new JScrollPane(console);
+        console.setScrollPane(consoleScroll);
+        
+        JSplitPane jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, consoleScroll, dp);
+        jsp.setOneTouchExpandable(false);
+        jsp.getLeftComponent().setMinimumSize(new Dimension(0, 0));
+		add(jsp, BorderLayout.CENTER);
 	}
     
     protected DisplayPanel getDisplayPanel() {

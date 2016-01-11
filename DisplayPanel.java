@@ -130,6 +130,10 @@ class DisplayPanel extends JPanel {
         center.setAction(action);
     }
 
+    public boolean errorIfObjectOffscreen(DrawableObject obj) {
+        return center.errorIfObjectOffscreen(obj);
+    }
+
     public void addDrawableObject(DrawableObject obj) {
         center.addDrawableObject(obj);
     }

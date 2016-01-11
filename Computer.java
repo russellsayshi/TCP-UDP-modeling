@@ -34,7 +34,7 @@ public class Computer {
         Computer comp = new Computer(null, drawable, dp);
         Node node = new Node(s -> Utility.displayError("Error", s.toString()), ip, dp.getNetwork(), comp);
         if(!dp.getNetwork().placeNodeAtIP(ip, node)) {
-            Utility.displayError("Error", "Cannot create computer at that IP");
+            Utility.displayErrorMonospace("Error", "Cannot create computer at that IP");
             return null;
         }
         comp.setNode(node);

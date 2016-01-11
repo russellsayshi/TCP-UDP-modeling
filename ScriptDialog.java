@@ -8,34 +8,39 @@ import org.fife.ui.rsyntaxtextarea.*;
 
 class ScriptDialog extends JDialog implements ActionListener {
     public static final String TITLE = "Script node";
+    private static String helpStr;
     private JSplitPane jsp;
     private Consumer<String> runCallback;
     private RSyntaxTextArea textArea;
     
-    public ScriptDialog(JFrame parent, Consumer<String> runCallback) {
+    public ScriptDialog(JFrame parent, Consumer<String> runCallback, String oldScript) {
         super(parent, TITLE, ModalityType.DOCUMENT_MODAL);
         this.runCallback = runCallback;
         setLayout(new BorderLayout());
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setMinimumSize(new Dimension(100, 145));
         
-        textArea = new RSyntaxTextArea(20, 60);
+        textArea = new RSyntaxTextArea(20, 80);
         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
         textArea.setCodeFoldingEnabled(true);
+        textArea.setText(oldScript);
         RTextScrollPane sp = new RTextScrollPane(textArea);
         
         JTextPane help = new JTextPane();
         help.setEditable(false);
         help.setContentType("text/html");
-        Scanner scan = new Scanner(
-            ScriptDialog.class.getResourceAsStream("resources/scripthelp.html"), "UTF-8")
-            .useDelimiter("\\A");
-        String helpStr = scan.next();
-        scan.close();
+        if(helpStr == null) {
+            Scanner scan = new Scanner(
+                ScriptDialog.class.getResourceAsStream("resources/scripthelp.html"), "UTF-8")
+                .useDelimiter("\\A");
+            helpStr = scan.next();
+            scan.close();
+        }
         JScrollPane helpScroll = new JScrollPane(help);
         
         jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sp, helpScroll);
-        jsp.getRightComponent().setMinimumSize(new Dimension());
+        jsp.getRightComponent().setMinimumSize(new Dimension(0, 0));
+        jsp.setOneTouchExpandable(false);
         jsp.setResizeWeight(1.0);
         add(jsp, BorderLayout.CENTER);
         
@@ -109,6 +114,6 @@ class ScriptDialog extends JDialog implements ActionListener {
     }
     
     public static void main(String[] args) {
-        (new ScriptDialog(null, null)).setVisible(true);
+        (new ScriptDialog(null, null, "")).setVisible(true);
     }
 }

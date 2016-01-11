@@ -249,6 +249,10 @@ class Node {
         this.computer = computer;
     }
     
+    public String getScript() {
+        return script;
+    }
+    
     public void setIP(String ip) {
         this.ip = ip;
     }

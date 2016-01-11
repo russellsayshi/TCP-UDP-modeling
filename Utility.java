@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.plaf.*;
 import java.util.function.*;
 import java.util.regex.*;
 
@@ -55,6 +56,10 @@ class Utility {
                                       message,
                                       title,
                                       JOptionPane.ERROR_MESSAGE);
+    }
+    
+    public static void displayErrorMonospace(String title, String message) {
+        displayError(title, "<code>" + message + "</code>");
     }
     
     public static void displayMessage(String title, String message) {

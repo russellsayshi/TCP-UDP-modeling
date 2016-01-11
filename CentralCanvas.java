@@ -41,13 +41,21 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
             @Override
             public void componentMoved(ComponentEvent e) {}
         });
+        setMinimumSize(new Dimension(1, 1));
 	}
-
-    public void addDrawableObject(DrawableObject obj) {
+    
+    public boolean errorIfObjectOffscreen(DrawableObject obj) {
         Rectangle whole = new Rectangle(0, 0, width, height);
         if(!whole.contains(obj.getRectangle())) {
             Utility.displayError("Error", "That object does not fit within the bounds of the canvas.");
             redrawImage(false);
+            return true;
+        }
+        return false;
+    }
+
+    public void addDrawableObject(DrawableObject obj) {
+        if(errorIfObjectOffscreen(obj)) {
             return;
         }
         if(obj.getClass().isInstance(DrawablePath.class)) {
