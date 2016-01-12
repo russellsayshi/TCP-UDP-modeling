@@ -15,6 +15,7 @@ class Node {
     private String ip;
     private Network net;
     private Computer computer;
+    private EventWriter writer;
     
     public interface ReceiveFunction {
         void accept(String str0, Integer int0, String str1);
@@ -223,6 +224,8 @@ class Node {
         }
     }
     public class NodeUtility {
+        private ArrayList<java.util.Timer> timers = new ArrayList<>();
+        
         public String getIP() {
             return ip;
         }
@@ -235,18 +238,54 @@ class Node {
             return Node.this.getNet().ping(ip);
         }
         
-        public java.util.Timer wait(TimerTask runnable, int milliseconds) {
+        public java.util.Timer delay(Runnable runnable, long milliseconds) {
             java.util.Timer timer = new java.util.Timer();
-            timer.schedule(runnable, milliseconds);
+            timer.schedule(new TimerTask() {
+                public void run() {
+                    runnable.run();
+                }
+            }, milliseconds);
+            timers.add(timer);
             return timer;
+        }
+        
+        public java.util.Timer interval(Runnable runnable, long milliseconds, long period) {
+            java.util.Timer timer = new java.util.Timer();
+            timer.schedule(new TimerTask() {
+                public void run() {
+                    runnable.run();
+                }
+            }, milliseconds, period);
+            timers.add(timer);
+            return timer;
+        }
+        
+        public ArrayList<java.util.Timer> getTimers() {
+            return timers;
+        }
+        
+        public void removeTimers() {
+            for(java.util.Timer timer : timers) {
+                timer.cancel();
+                timer.purge();
+            }
+            timers = new ArrayList<>();
         }
     }
     
-    public Node(Consumer<ScriptException> errorCallback, String ip, Network net, Computer computer) {
-        this.errorCallback = errorCallback;
+    public Node(String ip, Network net, Computer computer) {
         this.ip = ip;
         this.net = net;
         this.computer = computer;
+    }
+    
+    public void initializeWriterWithPrintCallback(BiConsumer<String, String> messageCallback) {
+        writer = new EventWriter(this, messageCallback);
+        engine.getContext().setWriter(writer);
+    }
+    
+    public void setErrorCallback(Consumer<ScriptException> errorCallback) {
+        this.errorCallback = errorCallback;
     }
     
     public String getScript() {
@@ -283,6 +322,9 @@ class Node {
     private void initCommunications() {
         tcp = new TCP();
         udp = new UDP();
+        if(nodeutility != null) {
+            nodeutility.removeTimers();
+        }
         nodeutility = new NodeUtility();
     }
     

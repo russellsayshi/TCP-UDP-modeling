@@ -13,7 +13,7 @@ class ScriptDialog extends JDialog implements ActionListener {
     private Consumer<String> runCallback;
     private RSyntaxTextArea textArea;
     
-    public ScriptDialog(JFrame parent, Consumer<String> runCallback, String oldScript) {
+    public ScriptDialog(JFrame parent, Consumer<String> runCallback, String oldScript, String additionalInfo) {
         super(parent, TITLE, ModalityType.DOCUMENT_MODAL);
         this.runCallback = runCallback;
         setLayout(new BorderLayout());
@@ -38,7 +38,19 @@ class ScriptDialog extends JDialog implements ActionListener {
         }
         JScrollPane helpScroll = new JScrollPane(help);
         
-        jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sp, helpScroll);
+        JTextArea additionalPane = null;
+        JSplitPane pane2 = null;
+        JScrollPane additionalScroll = null;
+        if(additionalInfo == null) {
+            jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sp, helpScroll);
+        } else {
+            additionalPane = new JTextArea();
+            additionalPane.setEditable(false);
+            additionalPane.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+            additionalScroll = new JScrollPane(additionalPane);
+            pane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, additionalScroll, sp);
+            jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pane2, helpScroll);
+        }
         jsp.getRightComponent().setMinimumSize(new Dimension(0, 0));
         jsp.setOneTouchExpandable(false);
         jsp.setResizeWeight(1.0);
@@ -65,6 +77,15 @@ class ScriptDialog extends JDialog implements ActionListener {
         
         pack();
         help.setText(helpStr);
+        if(additionalPane != null && pane2 != null && additionalScroll != null) {
+            additionalPane.setText(additionalInfo);
+            pane2.setDividerLocation(0.3);
+            final JScrollPane innerScrollPane = additionalScroll;
+            SwingUtilities.invokeLater(() -> {
+                JScrollBar sb = innerScrollPane.getHorizontalScrollBar();
+                sb.setValue(sb.getMinimum());
+            });
+        }
         setLocationRelativeTo(parent);
         jsp.setDividerLocation(jsp.getMaximumDividerLocation());
     }
@@ -114,6 +135,6 @@ class ScriptDialog extends JDialog implements ActionListener {
     }
     
     public static void main(String[] args) {
-        (new ScriptDialog(null, null, "")).setVisible(true);
+        (new ScriptDialog(null, null, "", null)).setVisible(true);
     }
 }

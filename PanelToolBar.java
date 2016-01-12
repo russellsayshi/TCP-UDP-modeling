@@ -96,7 +96,9 @@ class PanelToolBar extends JToolBar implements ActionListener {
                             }
                             DrawablePath drawpath = new DrawablePath(gp);
                             if(dp.errorIfObjectOffscreen(drawpath)) return;
-                            Computer comp = Computer.computerFactory(drawpath, dp);
+                            Computer comp = Computer.computerFactory(drawpath, dp,
+                                mw.getConsole().getPrintCallback(),
+                                mw.getConsole().getErrorCallback());
                             if(comp != null) {
                                 drawpath.setComputer(comp);
                                 dp.addDrawableObject(drawpath);
@@ -139,7 +141,9 @@ class PanelToolBar extends JToolBar implements ActionListener {
                             }
                             DrawableRectangle drawrect = new DrawableRectangle(rect);
                             if(dp.errorIfObjectOffscreen(drawrect)) return;
-                            Computer comp = Computer.computerFactory(drawrect, dp);
+                            Computer comp = Computer.computerFactory(drawrect, dp,
+                                mw.getConsole().getPrintCallback(),
+                                mw.getConsole().getErrorCallback());
                             if(comp != null) {
                                 drawrect.setComputer(comp);
                                 dp.addDrawableObject(drawrect);
@@ -169,7 +173,7 @@ class PanelToolBar extends JToolBar implements ActionListener {
                             if(str != null) {
                                 comp.getNode().setScript(str);
                             }
-                        }, comp.getNode().getScript()).setVisible(true);
+                        }, comp.getNode().getScript(), null).setVisible(true);
                     }
                 }
             }));

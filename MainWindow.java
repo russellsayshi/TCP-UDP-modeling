@@ -51,7 +51,7 @@ class MainWindow extends JFrame {
 		//Central frame with canvas
 		dp = new DisplayPanel(canvasWidth, canvasHeight);
         
-        console = new Console();
+        console = new Console(this, dp.getNetwork());
         consoleScroll = new JScrollPane(console);
         console.setScrollPane(consoleScroll);
         
@@ -63,6 +63,10 @@ class MainWindow extends JFrame {
     
     protected DisplayPanel getDisplayPanel() {
         return dp;
+    }
+    
+    public Console getConsole() {
+        return console;
     }
 
 	public static void main(String[] args) {

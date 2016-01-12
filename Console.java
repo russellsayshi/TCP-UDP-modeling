@@ -4,6 +4,8 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.text.html.*;
+import java.util.function.*;
+import javax.script.ScriptException;
 
 class Console extends JTextPane implements MouseListener, MouseMotionListener {
     private Style errorStyle;
@@ -13,12 +15,23 @@ class Console extends JTextPane implements MouseListener, MouseMotionListener {
     private Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
     private JScrollPane parent;
     private StyledDocument doc;
+    private Network net;
+    private JFrame parentFrame;
+    private boolean autoscroll = true;
     
-    public Console() {
-        this.parent = parent;
+    public Console(JFrame parentFrame, Network net) {
+        this.parentFrame = parentFrame;
+        this.net = net;
         setEditable(false);
         setContentType("text/html");
         doc = getStyledDocument();
+        addStyledText("Initialized", null);
+        setPreferredSize(new Dimension(150, 0));
+        addMouseMotionListener(this);
+        initializeStyles();
+    }
+    
+    private void initializeStyles() {
         errorStyle = doc.addStyle("errorStyle",
                                  StyleContext.
                                  getDefaultStyleContext().
@@ -29,25 +42,38 @@ class Console extends JTextPane implements MouseListener, MouseMotionListener {
         errorStyleMono = doc.addStyle("errorStyleMono",
                                  errorStyle);
         StyleConstants.setFontFamily(errorStyleMono, "Monospaced");
-        addStyledText("Initialized", null);
-        addHTML("<br><b>NEAT</b>");
-        setPreferredSize(new Dimension(150, 0));
-        addMouseListener(this);
-        addMouseMotionListener(this);
+    }
+    
+    public BiConsumer<String, String> getPrintCallback() {
+        return ((ip, str) -> {
+            if(str.charAt(str.length()-1) == '\n') {
+                str = str.substring(0, str.length()-1);
+            }
+            displayMessageFromIP(ip, str);
+        });
+    }
+    
+    public Consumer<ScriptExceptionContainer> getErrorCallback() {
+        return ((error) -> {
+            displayScriptError(error);
+        });
     }
     
     public void setScrollPane(JScrollPane parent) {
         this.parent = parent;
+        JScrollBar jsb = parent.getVerticalScrollBar();
+        jsb.addAdjustmentListener(new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent ae) {
+                if(!ae.getValueIsAdjusting() && autoscroll) {
+                    jsb.setValue(jsb.getMaximum());
+                }
+            }
+        });
     }
     
-    private void scrollToBottom() {
-        if(parent == null) return;
-        JScrollBar vertical = parent.getVerticalScrollBar();
-        vertical.setValue(vertical.getMaximum());
-    }
-    
-    private void scrollToBottomLater() {
-        SwingUtilities.invokeLater(()->scrollToBottom());
+    public void displayMessageFromIP(String ip, String text) {
+        addHTML("<br><b>" + ip + "</b>: " + text);
     }
     
     private void addHTML(String text) {
@@ -71,7 +97,6 @@ class Console extends JTextPane implements MouseListener, MouseMotionListener {
         addStyledText("Error", errorStyleRed);
         addStyledText(" at ", errorStyle);
         addStyledText(se.ip, errorStyleMono);
-        scrollToBottomLater();
     }
     
     private void addStyledText(String text, Style style) {
@@ -82,13 +107,36 @@ class Console extends JTextPane implements MouseListener, MouseMotionListener {
         }
     }
     
+    public void setAutoscroll(boolean autoscroll) {
+        this.autoscroll = autoscroll;
+    }
+    
+    public boolean getAutoscroll() {
+        return autoscroll;
+    }
+    
     @Override
     public void mouseClicked(MouseEvent me) {
         Element el = doc.getCharacterElement(viewToModel(me.getPoint()));
         if(el == null) return;
         AttributeSet as = el.getAttributes();
         if(as.isDefined("ip")) {
-            String action = as.getAttribute("ip").toString();
+            String ip = (String)as.getAttribute("ip");
+            ScriptException se = (ScriptException)as.getAttribute("exception");
+            Node node = net.getAtIP(ip);
+            if(node == null) {
+                Utility.displayError("Error", "Computer does not exist");
+                return;
+            }
+            String errorString = "--ERROR--\n" +
+                "Error at line number " + se.getLineNumber() +
+                " and column number " + se.getColumnNumber() + 
+                "\n" + se.getMessage();
+            new ScriptDialog(parentFrame, str -> {
+                if(str != null) {
+                    node.setScript(str);
+                }
+            }, node.getScript(), errorString).setVisible(true);
         }
     }
     
@@ -107,11 +155,7 @@ class Console extends JTextPane implements MouseListener, MouseMotionListener {
     @Override
     public void mouseExited(MouseEvent me) {}
     @Override
-    public void mouseEntered(MouseEvent me) {
-        ScriptExceptionContainer se = new ScriptExceptionContainer();
-        se.ip = "10.10.10.45";
-        se.exception = new javax.script.ScriptException("neat");
-        displayScriptError(se);}
+    public void mouseEntered(MouseEvent me) {}
     @Override
     public void mouseReleased(MouseEvent me) {}
     @Override
