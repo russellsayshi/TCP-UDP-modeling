@@ -58,7 +58,7 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
         if(errorIfObjectOffscreen(obj)) {
             return;
         }
-        if(obj.getClass().isInstance(DrawablePath.class)) {
+        if(obj instanceof DrawablePath) {
             freehandObjects.add((DrawablePath)obj);
         } else {
             objects.add(obj);

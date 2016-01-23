@@ -39,7 +39,7 @@ public class Computer {
             ScriptExceptionContainer sec = new ScriptExceptionContainer();
             sec.ip = node.getIP();
             sec.exception = error;
-            errorCallback.accept(sec);
+            errorCallback.accept(sec); //Propagate callback
         });
         if(!dp.getNetwork().placeNodeAtIP(ip, node)) {
             Utility.displayErrorMonospace("Error", "Cannot create computer at that IP");

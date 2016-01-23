@@ -177,6 +177,17 @@ class PanelToolBar extends JToolBar implements ActionListener {
                     }
                 }
             }));
+        } else if("select".equals(s)) {
+            //ArrayList<DrawableObject> intersectingO
+            mw.getDisplayPanel().setAction(new CanvasAction("Select", (screen, actual, g) -> {
+                
+            }, (screen, actual, g) -> {
+                
+            }, (screen, actual, g) -> {
+                
+            }));
+        } else {
+            System.out.println("Unknown action: " + s);
         }
 	}
 	private void setMaxDesiredBound(int i) {
