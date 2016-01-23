@@ -24,14 +24,21 @@ public class Computer {
         return drawable;
     }
     
-    public static Computer computerFactory(DrawableObject drawable, DisplayPanel dp, BiConsumer<String, String> printCallback, Consumer<ScriptExceptionContainer> errorCallback) {
+    public void ipPrompt() {
         String ip = "";
         do {
-            ip = Utility.getInput("Enter ip", "Enter the IP address for the computer you are creating (e.g. 10.10.39.45):");
+            ip = Utility.getInput("Enter ip", "Enter the new IP address for the computer " + node.getIP() + ":");
             if(ip == null) {
-                return null;
+                return;
             }
         } while(!Utility.verifyIP(ip));
+        node.getNet().changeIP(
+            node.getIP(),
+            ip);
+    }
+    
+    public static Computer computerFactory(DrawableObject drawable, DisplayPanel dp, BiConsumer<String, String> printCallback, Consumer<ScriptExceptionContainer> errorCallback) {
+        String ip = Utility.getNextIP();
         Computer comp = new Computer(null, drawable, dp);
         Node node = new Node(ip, dp.getNetwork(), comp);
         node.initializeWriterWithPrintCallback(printCallback);

@@ -10,6 +10,7 @@ class PanelToolBar extends JToolBar implements ActionListener {
 	private int currentImageSize = 32;
     private MainWindow mw;
     private JButton computerButton;
+    private JButton scriptButton;
     private ComputerTooltipFrame ctf;
 
 	public PanelToolBar(MainWindow mw) {
@@ -21,9 +22,8 @@ class PanelToolBar extends JToolBar implements ActionListener {
 	private void addComponents() {
 		add(makeIconButton("cursor", "select", "Selection tool", "Select"));
 		add(makeIconButton("text", "text", "Draw text on the canvas", "Text"));
-        computerButton = makeIconButton("computer", "computer", "Create a new computer", "Add computer");
-		add(computerButton);
-        add(makeIconButton("script", "script", "Scripting tool", "Script"));
+        add((computerButton = makeIconButton("computer", "computer", "Create a new computer", "Add computer")));
+        add((scriptButton = makeIconButton("script", "script", "Scripting tool", "Script")));
 
 		add(Box.createHorizontalGlue());
 

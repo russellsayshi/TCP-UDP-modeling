@@ -236,7 +236,7 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
 	@Override
 	public void mouseClicked(MouseEvent e) {
         if(SwingUtilities.isRightMouseButton(e) && !e.isConsumed()) {
-            RightClickMenu rcm = new RightClickMenu();
+            RightClickMenu rcm = new RightClickMenu(getObjectAtScreenLocation(e.getX(), e.getY()));
             rcm.show(e.getComponent(), e.getX(), e.getY());
         }
     }
