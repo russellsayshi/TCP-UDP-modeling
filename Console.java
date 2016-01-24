@@ -28,6 +28,7 @@ class Console extends JTextPane implements MouseListener, MouseMotionListener {
         addStyledText("Initialized", null);
         setPreferredSize(new Dimension(150, 0));
         addMouseMotionListener(this);
+        addMouseListener(this);
         initializeStyles();
     }
     

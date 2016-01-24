@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.UIManager.*;
 
 /* Holds the main GUI */
 class MainWindow extends JFrame {
@@ -26,7 +27,20 @@ class MainWindow extends JFrame {
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		//Initialize local look and feel
+/*        try {
+    for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+        System.out.println(info.getName());
+        if ("Metal".equals(info.getName())) {
+            //UIManager.setLookAndFeel(info.getClassName());
+            break;
+        }
+    }
+} catch (Exception e) {
+    // If Nimbus is not available, you can set the GUI to another look and feel.
+}*/
+        //TODO: ADD LOOK AND FEEL PICKER
+        
+		/*//Initialize local look and feel
 		try {
 			UIManager.setLookAndFeel(
 				UIManager.getSystemLookAndFeelClassName());
@@ -37,7 +51,7 @@ class MainWindow extends JFrame {
 			IllegalAccessException ex
 		) {
 			System.out.println("Non fatal error: Unable to initialize local LAF");
-		}
+		}*/
 	}
 
 	private void setupLayout() {

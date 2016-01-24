@@ -6,10 +6,9 @@ import javax.swing.event.*;
 import java.util.function.*;
 import java.net.URL;
 import java.util.ArrayList;
-import java.lang.reflect.InvocationTargetException;
 
 class PanelToolBar extends JToolBar implements ActionListener {
-	private int currentImageSize = 32;
+	private int currentImageSize = 3;
     private MainWindow mw;
     private JButton computerButton;
     private JButton scriptButton;
@@ -23,9 +22,9 @@ class PanelToolBar extends JToolBar implements ActionListener {
 		addComponents();
 	}
 	private void addComponents() {
-		add(makeIconButton("cursor", "select", "Selection tool", "Select"));
+		add(makeIconButton("move", "select", "Movement tool", "Move"));
 		add(makeIconButton("text", "text", "Draw text on the canvas", "Text"));
-        add((computerButton = makeIconButton("computer", "computer", "Create a new computer", "Add computer")));
+        add((computerButton = makeIconButton("monitor", "computer", "Create a new computer", "Computer")));
         add((scriptButton = makeIconButton("script", "script", "Scripting tool", "Script")));
 
 		add(Box.createHorizontalGlue());
@@ -40,9 +39,15 @@ class PanelToolBar extends JToolBar implements ActionListener {
 				   String actionCommand,
 				   String toolTipText,
 				   String altText) {
-		//Find image
-		String loc = "resources/" + name + "_outline" + currentImageSize + ".png";
-		URL imageURL = PanelToolBar.class.getResource(loc);
+        URL imageURL = null;
+        String loc = null;
+        if(currentImageSize != -1) {
+            //Find image
+            loc = "resources/openiconic/png/" + name
+                + (currentImageSize == 1 ? "" :  "-" + currentImageSize + "x")
+                + ".png";
+            imageURL = PanelToolBar.class.getResource(loc);
+        }
 
 		//Create and setup button
 		JButton button = new JButton();
@@ -54,7 +59,9 @@ class PanelToolBar extends JToolBar implements ActionListener {
 			button.setIcon(new ImageIcon(imageURL, altText));
 		} else {
 			button.setText(altText);
-			System.err.println("Unable to find resource: " + loc);
+            if(currentImageSize != -1) {
+                System.err.println("Unable to find resource: " + loc);
+            }
 		}
 		return button;
 	}
@@ -67,7 +74,12 @@ class PanelToolBar extends JToolBar implements ActionListener {
     }
     private void setAction(String s) {
         if("size".equals(s)) {
-			setMaxDesiredBound(currentImageSize == 32 ? 64 : 32);
+			setMaxDesiredBound(currentImageSize == 1 ? 2 :
+                              (currentImageSize == 2 ? 3 :
+                              (currentImageSize == 3 ? 4 :
+                              (currentImageSize == 4 ? 6 :
+                              (currentImageSize == 6 ? 8 :
+                              (currentImageSize == 8 ? -1 : 1))))));
             mw.notifyDisplayPanelToUpdate();
         } else if("computer".equals(s)) {
             Point p = computerButton.getLocationOnScreen();
@@ -118,24 +130,100 @@ class PanelToolBar extends JToolBar implements ActionListener {
                     }));
                     break;
                     case RECTANGLE:
-                        dp.setAction(drawableShapeActionFactory(
-                            "Rectangle",
-                            pointsActual,
-                            pointsScreen,
-                            counter,
-                            Rectangle.class,
-                            DrawableRectangle.class,
-                            Integer.TYPE));
+                    dp.setAction(new CanvasAction("Rectangle", (screen, actual, g) -> {
+                        //Mouse pressed
+                        pointsScreen.add(screen);
+                        pointsActual.add(actual);
+                        counter.val = 0;
+                    }, (screen, actual, g) -> {
+                        Graphics2D g2d = (Graphics2D)g;
+                        Point p1 = pointsScreen.get(0);
+                        if(counter.val == 1) {
+                            Point p2 = pointsScreen.get(1);
+                            g2d.setColor(Color.WHITE);
+                            g2d.draw(Utility.normalizeRectangle(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y));
+                            pointsScreen.remove(1);
+                            pointsActual.remove(1);
+                        }
+                        g2d.setColor(Color.BLACK);
+                        Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, screen.x-p1.x, screen.y-p1.y);
+                        g2d.draw(rect);
+                        pointsScreen.add(screen);
+                        pointsActual.add(actual);
+                        counter.val = 1;
+                    }, (screen, actual, g) -> {
+                        if(pointsActual.size() > 0) {
+                            Point p1 = pointsActual.get(0);
+                            Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, actual.x-p1.x, actual.y-p1.y);
+                            if(rect.width < 5 || rect.height < 5) {
+                                Utility.displayError("Error", "Please draw a bigger rectangle");
+                                dp.updateAll();
+                                return;
+                            }
+                            DrawableRectangle drawrect = new DrawableRectangle(rect);
+                            if(dp.errorIfObjectOffscreen(drawrect)) return;
+                            Computer comp = Computer.computerFactory(drawrect, dp,
+                                mw.getConsole().getPrintCallback(),
+                                mw.getConsole().getErrorCallback());
+                            if(comp != null) {
+                                drawrect.setComputer(comp);
+                                dp.addDrawableObject(drawrect);
+                            }
+                            dp.updateAll();
+                        }
+                    }));
                     break;
                     case OVAL:
-                        dp.setAction(drawableShapeActionFactory(
-                            "Oval",
-                            pointsActual,
-                            pointsScreen,
-                            counter,
-                            Ellipse2D.Float.class,
-                            DrawableEllipse.class,
-                            Float.TYPE));
+                    //There's repetition because the alternatives are much slower
+                    dp.setAction(new CanvasAction("Oval", (screen, actual, g) -> {
+                        //Mouse pressed
+                        pointsScreen.add(screen);
+                        pointsActual.add(actual);
+                        counter.val = 0;
+                    }, (screen, actual, g) -> {
+                        Graphics2D g2d = (Graphics2D)g;
+                        Point p1 = pointsScreen.get(0);
+                        if(counter.val == 1) {
+                            Point p2 = pointsScreen.get(1);
+                            g2d.setColor(Color.WHITE);
+                            Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y);
+                            g2d.drawOval(rect.x,
+                                        rect.y,
+                                        rect.width,
+                                        rect.height);
+                            pointsScreen.remove(1);
+                            pointsActual.remove(1);
+                        }
+                        g2d.setColor(Color.BLACK);
+                        Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, screen.x-p1.x, screen.y-p1.y);
+                        g2d.drawOval(rect.x,
+                                    rect.y,
+                                    rect.width,
+                                    rect.height);
+                        pointsScreen.add(screen);
+                        pointsActual.add(actual);
+                        counter.val = 1;
+                    }, (screen, actual, g) -> {
+                        if(pointsActual.size() > 0) {
+                            Point p1 = pointsActual.get(0);
+                            Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, actual.x-p1.x, actual.y-p1.y);
+                            if(rect.width < 5 || rect.height < 5) {
+                                Utility.displayError("Error", "Please draw a bigger ellipse");
+                                dp.updateAll();
+                                return;
+                            }
+                            DrawableEllipse drawrect = new DrawableEllipse(rect);
+                            if(dp.errorIfObjectOffscreen(drawrect)) return;
+                            Computer comp = Computer.computerFactory(drawrect, dp,
+                                mw.getConsole().getPrintCallback(),
+                                mw.getConsole().getErrorCallback());
+                            if(comp != null) {
+                                drawrect.setComputer(comp);
+                                dp.addDrawableObject(drawrect);
+                            }
+                            dp.updateAll();
+                        }
+                    }));
                     break;
                     case IMAGE:
                     Utility.displayError("Error", "Not supported yet.");
@@ -165,74 +253,6 @@ class PanelToolBar extends JToolBar implements ActionListener {
         } else {
             System.out.println("Unknown action: " + s);
         }
-    }
-    private <ShapeType extends Shape, DrawableType extends DrawableObject> CanvasAction drawableShapeActionFactory(
-                                                                            String name,
-                                                                            ArrayList<Point> pointsActual,
-                                                                            ArrayList<Point> pointsScreen,
-                                                                            MutableInteger counter,
-                                                                            Class<ShapeType> shapeClass,
-                                                                            Class<DrawableType> drawableClass,
-                                                                            Class constructorType) {
-        DisplayPanel dp = mw.getDisplayPanel();
-        return new CanvasAction(name, (screen, actual, g) -> {
-            //Mouse pressed
-            pointsScreen.add(screen);
-            pointsActual.add(actual);
-            counter.val = 0;
-        }, (screen, actual, g) -> {
-            try {
-                Graphics2D g2d = (Graphics2D)g;
-                Point p1 = pointsScreen.get(0);
-                if(counter.val == 1) {
-                    Point p2 = pointsScreen.get(1);
-                    g2d.setColor(Color.WHITE);
-                    Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y);
-                    ShapeType shape = shapeClass.getDeclaredConstructor(constructorType, constructorType, constructorType, constructorType)
-                        .newInstance(rect.x, rect.y, rect.width, rect.height);
-                    g2d.draw(shape);
-                    pointsScreen.remove(1);
-                    pointsActual.remove(1);
-                }
-                g2d.setColor(Color.BLACK);
-                Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, screen.x-p1.x, screen.y-p1.y);
-                ShapeType shape = shapeClass.getDeclaredConstructor(constructorType, constructorType, constructorType, constructorType)
-                    .newInstance(rect.x, rect.y, rect.width, rect.height);
-                g2d.draw(shape);
-                pointsScreen.add(screen);
-                pointsActual.add(actual);
-                counter.val = 1;
-            } catch(NoSuchMethodException | InstantiationException | IllegalAccessException |
-                    InvocationTargetException ex) {
-                ex.printStackTrace();
-            }
-        }, (screen, actual, g) -> {
-            try {
-                if(pointsActual.size() > 0) {
-                    Point p1 = pointsActual.get(0);
-                    Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, actual.x-p1.x, actual.y-p1.y);
-                    if(rect.width < 5 || rect.height < 5) {
-                        Utility.displayError("Error", "Please draw a bigger " + name.toLowerCase());
-                        dp.updateAll();
-                        return;
-                    }
-                    DrawableType drawrect = drawableClass.getDeclaredConstructor(Rectangle.class)
-                        .newInstance(rect);
-                    if(dp.errorIfObjectOffscreen(drawrect)) return;
-                    Computer comp = Computer.computerFactory(drawrect, dp,
-                        mw.getConsole().getPrintCallback(),
-                        mw.getConsole().getErrorCallback());
-                    if(comp != null) {
-                        drawrect.setComputer(comp);
-                        dp.addDrawableObject(drawrect);
-                    }
-                    dp.updateAll();
-                }
-            } catch(NoSuchMethodException | InstantiationException | IllegalAccessException |
-                    InvocationTargetException ex) {
-                ex.printStackTrace();
-            }
-        });
     }
     public void initializeSelectAction() {
         setSelectAction((action) -> {
