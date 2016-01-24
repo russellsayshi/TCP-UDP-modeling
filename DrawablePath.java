@@ -3,25 +3,32 @@ import java.awt.geom.*;
 
 class DrawablePath extends DrawableObject {
     private GeneralPath gp;
+    private GeneralPath oldGP;
     private int xloc;
     private int yloc;
+    private int translateX;
+    private int translateY;
     private AffineTransform storedTransform;
     private Computer computer;
     
     public DrawablePath(GeneralPath gp) {
-        this.computer = computer;
-        AffineTransform t = new AffineTransform();
-        rect = gp.getBounds();
-        originalRect = rect;
+        this.oldGP = gp;
+        rect = oldGP.getBounds();
+        originalRect = (Rectangle)rect.clone();
         xloc = rect.x;
         yloc = rect.y;
-        t.translate(-xloc, -yloc);
-        Shape s = gp.createTransformedShape(t);
-        this.gp = new GeneralPath(s);
+        generatePath();
     }
     
     public void setComputer(Computer computer) {
         this.computer = computer;
+    }
+    
+    private void generatePath() {
+        AffineTransform t = new AffineTransform();
+        t.translate(-xloc, -yloc);
+        Shape s = oldGP.createTransformedShape(t);
+        this.gp = new GeneralPath(s);
     }
     
     @Override
@@ -30,20 +37,31 @@ class DrawablePath extends DrawableObject {
     }
     
     @Override
+    public void changePosition(int dx, int dy, double zoom, Graphics g) {
+        xloc += dx;
+        yloc += dy;
+        translateX += dx;
+        translateY += dy;
+        originalRect.x = xloc;
+        originalRect.y = yloc;
+        generatePath();
+        updateBoundingBox(g, zoom);
+    }
+    
+    @Override
     public void draw(Graphics g, Rectangle viewport, double zoom, int offsetX, int offsetY) {
         AffineTransform t = new AffineTransform();
-        t.translate((int)((xloc - viewport.x) * zoom) + offsetX, (int)((yloc - viewport.y) * zoom) + offsetY);
+        t.translate((int)((xloc - viewport.x + translateX) * zoom) + offsetX, (int)((yloc - viewport.y + translateY) * zoom) + offsetY);
         t.scale(zoom, zoom);
         Graphics2D g2d = (Graphics2D)g;
         g2d.setTransform(t);
         g2d.draw(gp);
-        //g.drawString(text, (int)((rect.x - viewport.x) * zoom) + offsetX, (int)((rect.y + rect.height - viewport.y) * zoom) + offsetY);
     }
     
     @Override
     public void drawBoundingBox(Graphics g, Rectangle viewport, double zoom, int offsetX, int offsetY) {
         Graphics2D g2d = (Graphics2D)g;
-        Rectangle r = new Rectangle(0, 0, rect.width, rect.height);
+        Rectangle r = new Rectangle(-translateX, -translateY, rect.width, rect.height);
         g2d.draw(r);
     }
     

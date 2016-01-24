@@ -3,8 +3,10 @@ import java.awt.geom.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
+import java.util.function.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
 
 class PanelToolBar extends JToolBar implements ActionListener {
 	private int currentImageSize = 32;
@@ -12,11 +14,12 @@ class PanelToolBar extends JToolBar implements ActionListener {
     private JButton computerButton;
     private JButton scriptButton;
     private ComputerTooltipFrame ctf;
+    private String lastActionCommand = "select";
 
 	public PanelToolBar(MainWindow mw) {
 		super("Toolbar");
         this.mw = mw;
-		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+		//setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		addComponents();
 	}
 	private void addComponents() {
@@ -57,7 +60,13 @@ class PanelToolBar extends JToolBar implements ActionListener {
 	}
 	public void actionPerformed(ActionEvent ae) {
 		String s = ae.getActionCommand();
-		if("size".equals(s)) {
+		setAction(s);
+	}
+    public void resetAction() {
+        setAction(lastActionCommand);
+    }
+    private void setAction(String s) {
+        if("size".equals(s)) {
 			setMaxDesiredBound(currentImageSize == 32 ? 64 : 32);
             mw.notifyDisplayPanelToUpdate();
         } else if("computer".equals(s)) {
@@ -109,52 +118,24 @@ class PanelToolBar extends JToolBar implements ActionListener {
                     }));
                     break;
                     case RECTANGLE:
-                    dp.setAction(new CanvasAction("Rectangle", (screen, actual, g) -> {
-                        //Mouse pressed
-                        pointsScreen.add(screen);
-                        pointsActual.add(actual);
-                        counter.val = 0;
-                    }, (screen, actual, g) -> {
-                        Graphics2D g2d = (Graphics2D)g;
-                        Point p1 = pointsScreen.get(0);
-                        if(counter.val == 1) {
-                            Point p2 = pointsScreen.get(1);
-                            g2d.setColor(Color.WHITE);
-                            g2d.draw(Utility.normalizeRectangle(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y));
-                            pointsScreen.remove(1);
-                            pointsActual.remove(1);
-                        }
-                        g2d.setColor(Color.BLACK);
-                        Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, screen.x-p1.x, screen.y-p1.y);
-                        g2d.draw(rect);
-                        pointsScreen.add(screen);
-                        pointsActual.add(actual);
-                        counter.val = 1;
-                    }, (screen, actual, g) -> {
-                        if(pointsActual.size() > 0) {
-                            Point p1 = pointsActual.get(0);
-                            Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, actual.x-p1.x, actual.y-p1.y);
-                            if(rect.width < 5 || rect.height < 5) {
-                                Utility.displayError("Error", "Please draw a bigger rectangle");
-                                dp.updateAll();
-                                return;
-                            }
-                            DrawableRectangle drawrect = new DrawableRectangle(rect);
-                            if(dp.errorIfObjectOffscreen(drawrect)) return;
-                            Computer comp = Computer.computerFactory(drawrect, dp,
-                                mw.getConsole().getPrintCallback(),
-                                mw.getConsole().getErrorCallback());
-                            if(comp != null) {
-                                drawrect.setComputer(comp);
-                                dp.addDrawableObject(drawrect);
-                            } else {
-                                dp.updateAll();
-                            }
-                        }
-                    }));
+                        dp.setAction(drawableShapeActionFactory(
+                            "Rectangle",
+                            pointsActual,
+                            pointsScreen,
+                            counter,
+                            Rectangle.class,
+                            DrawableRectangle.class,
+                            Integer.TYPE));
                     break;
                     case OVAL:
-                    Utility.displayError("Error", "Not supported yet.");
+                        dp.setAction(drawableShapeActionFactory(
+                            "Oval",
+                            pointsActual,
+                            pointsScreen,
+                            counter,
+                            Ellipse2D.Float.class,
+                            DrawableEllipse.class,
+                            Float.TYPE));
                     break;
                     case IMAGE:
                     Utility.displayError("Error", "Not supported yet.");
@@ -178,18 +159,116 @@ class PanelToolBar extends JToolBar implements ActionListener {
                 }
             }));
         } else if("select".equals(s)) {
-            //ArrayList<DrawableObject> intersectingO
-            mw.getDisplayPanel().setAction(new CanvasAction("Select", (screen, actual, g) -> {
-                
-            }, (screen, actual, g) -> {
-                
-            }, (screen, actual, g) -> {
-                
-            }));
+            setSelectAction((action) -> {
+                mw.getDisplayPanel().setAction(action);
+            });
         } else {
             System.out.println("Unknown action: " + s);
         }
-	}
+    }
+    private <ShapeType extends Shape, DrawableType extends DrawableObject> CanvasAction drawableShapeActionFactory(
+                                                                            String name,
+                                                                            ArrayList<Point> pointsActual,
+                                                                            ArrayList<Point> pointsScreen,
+                                                                            MutableInteger counter,
+                                                                            Class<ShapeType> shapeClass,
+                                                                            Class<DrawableType> drawableClass,
+                                                                            Class constructorType) {
+        DisplayPanel dp = mw.getDisplayPanel();
+        return new CanvasAction(name, (screen, actual, g) -> {
+            //Mouse pressed
+            pointsScreen.add(screen);
+            pointsActual.add(actual);
+            counter.val = 0;
+        }, (screen, actual, g) -> {
+            try {
+                Graphics2D g2d = (Graphics2D)g;
+                Point p1 = pointsScreen.get(0);
+                if(counter.val == 1) {
+                    Point p2 = pointsScreen.get(1);
+                    g2d.setColor(Color.WHITE);
+                    Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y);
+                    ShapeType shape = shapeClass.getDeclaredConstructor(constructorType, constructorType, constructorType, constructorType)
+                        .newInstance(rect.x, rect.y, rect.width, rect.height);
+                    g2d.draw(shape);
+                    pointsScreen.remove(1);
+                    pointsActual.remove(1);
+                }
+                g2d.setColor(Color.BLACK);
+                Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, screen.x-p1.x, screen.y-p1.y);
+                ShapeType shape = shapeClass.getDeclaredConstructor(constructorType, constructorType, constructorType, constructorType)
+                    .newInstance(rect.x, rect.y, rect.width, rect.height);
+                g2d.draw(shape);
+                pointsScreen.add(screen);
+                pointsActual.add(actual);
+                counter.val = 1;
+            } catch(NoSuchMethodException | InstantiationException | IllegalAccessException |
+                    InvocationTargetException ex) {
+                ex.printStackTrace();
+            }
+        }, (screen, actual, g) -> {
+            try {
+                if(pointsActual.size() > 0) {
+                    Point p1 = pointsActual.get(0);
+                    Rectangle rect = Utility.normalizeRectangle(p1.x, p1.y, actual.x-p1.x, actual.y-p1.y);
+                    if(rect.width < 5 || rect.height < 5) {
+                        Utility.displayError("Error", "Please draw a bigger " + name.toLowerCase());
+                        dp.updateAll();
+                        return;
+                    }
+                    DrawableType drawrect = drawableClass.getDeclaredConstructor(Rectangle.class)
+                        .newInstance(rect);
+                    if(dp.errorIfObjectOffscreen(drawrect)) return;
+                    Computer comp = Computer.computerFactory(drawrect, dp,
+                        mw.getConsole().getPrintCallback(),
+                        mw.getConsole().getErrorCallback());
+                    if(comp != null) {
+                        drawrect.setComputer(comp);
+                        dp.addDrawableObject(drawrect);
+                    }
+                    dp.updateAll();
+                }
+            } catch(NoSuchMethodException | InstantiationException | IllegalAccessException |
+                    InvocationTargetException ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+    public void initializeSelectAction() {
+        setSelectAction((action) -> {
+            mw.getDisplayPanel().getCanvas().setDefaultAction(action);
+        });
+    }
+    public void setSelectAction(Consumer<CanvasAction> actionSetter) {
+            Container<Point> trulyOriginalActual = new Container<>(); //original location
+            Container<Point> originalActual = new Container<>(); //buffer location, gets updated
+            Container<DrawableObject> drawable = new Container<>(); //object we're moving
+            actionSetter.accept(new CanvasAction("Select", (screen, actual, g) -> {
+                originalActual.set(actual);
+                trulyOriginalActual.set(actual);
+                drawable.set(mw.getDisplayPanel().getObjectAtScreenLocation(screen.x, screen.y));
+            }, (screen, actual, g) -> {
+                if(drawable.get() != null) {
+                    int dx = actual.x - originalActual.get().x;
+                    int dy = actual.y - originalActual.get().y;
+                    mw.getDisplayPanel().getCanvas().drawObjectWithColor(drawable.get(), Color.WHITE, g);
+                    drawable.get().changePosition(dx, dy, mw.getDisplayPanel().getZoom(), g);
+                    mw.getDisplayPanel().getCanvas().drawObjectWithColor(drawable.get(), Color.BLACK, g);
+                    originalActual.set(actual);
+                }
+            }, (screen, actual, g) -> {
+                if(drawable.get() != null) {
+                    if(mw.getDisplayPanel().errorIfObjectOffscreen(drawable.get())) {
+                        //Revert position if offscreen
+                        drawable.get().changePosition(trulyOriginalActual.get().x - actual.x,
+                                                      trulyOriginalActual.get().y - actual.y,
+                                                      mw.getDisplayPanel().getZoom(),
+                                                      g);
+                    }
+                    mw.getDisplayPanel().updateAll();
+                }
+            }));
+    }
 	private void setMaxDesiredBound(int i) {
 		if(currentImageSize != i) {
 			currentImageSize = i;

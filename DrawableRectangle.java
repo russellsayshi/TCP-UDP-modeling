@@ -5,7 +5,7 @@ class DrawableRectangle extends DrawableObject {
     
     public DrawableRectangle(Rectangle self) {
         originalRect = self;
-        rect = self;
+        rect = (Rectangle)self.clone();
         updateBoundingBox(null, 1.0);
     }
     

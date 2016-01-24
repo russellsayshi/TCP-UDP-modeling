@@ -20,8 +20,8 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
     private ArrayList<DrawableObject> objects = new ArrayList<>();
     private ArrayList<DrawablePath> freehandObjects = new ArrayList<>();
     private Font drawingFont;
-    private final static CanvasAction emptyAction = new CanvasAction("", null, null, null);
-    private CanvasAction action = emptyAction;
+    private CanvasAction action = new CanvasAction("", null, null, null);
+    private CanvasAction defaultAction = action;
 
 	public CentralCanvas(int width, int height, DisplayPanel dp) {
         this.dp = dp;
@@ -46,12 +46,16 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
     
     public boolean errorIfObjectOffscreen(DrawableObject obj) {
         Rectangle whole = new Rectangle(0, 0, width, height);
-        if(!whole.contains(obj.getRectangle())) {
+        if(!whole.contains(obj.getOriginalRectangle())) {
             Utility.displayError("Error", "That object does not fit within the bounds of the canvas.");
             redrawImage(false);
             return true;
         }
         return false;
+    }
+    
+    public void setDefaultAction(CanvasAction action) {
+        defaultAction = action;
     }
 
     public void addDrawableObject(DrawableObject obj) {
@@ -63,6 +67,21 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
         } else {
             objects.add(obj);
         }
+    }
+    
+    public double getZoom() {
+        return zoom;
+    }
+    
+    public void drawObjectWithColor(DrawableObject drawable, Color c, Graphics g) {
+        Rectangle viewport = new Rectangle(dp.getHorizontalScrollBar().getValue(),
+                                           dp.getVerticalScrollBar().getValue(),
+                                           dp.getHorizontalScrollBar().getVisibleAmount(),
+                                           dp.getVerticalScrollBar().getVisibleAmount());
+        Color color = g.getColor();
+        g.setColor(c);
+        drawable.draw(g, viewport, zoom, offsetX, offsetY);
+        g.setColor(color);
     }
     
     public void regenerateImage(boolean zoomChanged) {
@@ -227,8 +246,8 @@ class CentralCanvas extends JPanel implements MouseListener, MouseMotionListener
                 Graphics g = img.getGraphics();
                 action.release().handle(new Point(e.getX(), e.getY()), calculateTrueLocation(e.getX(), e.getY()), g);
                 g.dispose();
-                action = emptyAction;
                 repaint();
+                action = defaultAction;
             }
         }
     }

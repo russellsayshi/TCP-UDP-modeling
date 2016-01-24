@@ -50,6 +50,7 @@ class MainWindow extends JFrame {
 
 		//Central frame with canvas
 		dp = new DisplayPanel(canvasWidth, canvasHeight);
+        toolbar.initializeSelectAction();
         
         console = new Console(this, dp.getNetwork());
         consoleScroll = new JScrollPane(console);

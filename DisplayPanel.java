@@ -142,6 +142,14 @@ class DisplayPanel extends JPanel {
         return center.getObjectAtScreenLocation(x, y);
     }
     
+    public double getZoom() {
+        return center.getZoom();
+    }
+    
+    public CentralCanvas getCanvas() {
+        return center;
+    }
+    
     public void updateAll() {
         center.regenerateImage(true);
         center.repaint();
