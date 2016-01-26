@@ -15,7 +15,7 @@ class DrawableRectangle extends DrawableObject {
     
     @Override
     public void updateBoundingBox(Graphics g, double zoom) {
-        rect.setSize((int)(originalRect.width*zoom), (int)(originalRect.height*zoom));
+        //rect.setSize((int)(originalRect.width*zoom), (int)(originalRect.height*zoom));
     }
     
     @Override

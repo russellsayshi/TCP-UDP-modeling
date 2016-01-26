@@ -24,6 +24,12 @@ public class Computer {
         return drawable;
     }
     
+    public void dispose() {
+        node.getNet().removeAtIP(node.getIP());
+        node.dispose();
+        
+    }
+    
     public void ipPrompt() {
         String ip = "";
         do {

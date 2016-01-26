@@ -29,11 +29,7 @@ class PanelToolBar extends JToolBar implements ActionListener {
 
 		add(Box.createHorizontalGlue());
 
-		JButton jb = new JButton("Change size");
-		jb.setActionCommand("size");
-		jb.setToolTipText("Changes size of icons");
-		jb.addActionListener(this);
-		add(jb);
+        add(makeIconButton("resize-both", "size", "Changes size of icons", "Change size"));
 	}
 	private JButton makeIconButton(String name,
 				   String actionCommand,
